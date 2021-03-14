@@ -38,10 +38,10 @@ jobs:
           pytest
   
   protocol_tests:
-      name: Protocol Tests
-      runs-on: ubuntu-latest
+    name: Protocol Tests
+    runs-on: ubuntu-latest
 
-      steps:
+    steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -49,7 +49,7 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.7
-     
+      
       - name: Launch server into background
         run: |
           python3 server.py & > /dev/null ; PID=$!; sleep 1; ps -p $PID > /dev/null
@@ -60,10 +60,10 @@ jobs:
           tests/test_basic.sh
 
   channel_tests:
-      name: Channel Tests
-      runs-on: ubuntu-latest
+    name: Channel Tests
+    runs-on: ubuntu-latest
 
-      steps:
+    steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -81,11 +81,11 @@ jobs:
         run: |
           tests/test_extra.sh
   
-    time_tests:
-      name: Timming Tests
-      runs-on: ubuntu-latest
+  time_tests:
+    name: Timming Tests
+    runs-on: ubuntu-latest
 
-      steps:
+    steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -101,4 +101,4 @@ jobs:
       - name: Run test_fast.sh
         timeout-minutes: 1
         run: |
-          tests/test_fash.sh
+          tests/test_fast.sh
