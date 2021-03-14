@@ -1,5 +1,6 @@
 """Tests for the chat protocol."""
 import pytest
+import mock
 from src.protocol import (
     CDProto,
     TextMessage,
@@ -16,19 +17,39 @@ from freezegun import freeze_time
 def test_protocol():
     p = CDProto()
 
-    assert str(p.register("student")) == '{"user": "student"}'
+    assert str(p.register("student")) == '{"command": "register", "user": "student"}'
 
-    assert str(p.join("#cd")) == '{"channel": "#cd"}'
+    assert str(p.join("#cd")) == '{"command": "join", "channel": "#cd"}'
 
     assert (
-        str(p.send_msg("Hello World")) == '{"message": "Hello World", "ts": 1615852800}'
+        str(p.message("Hello World"))
+        == '{"command": "message", "message": "Hello World", "ts": 1615852800}'
     )
 
-    assert isinstance(CDProto.recv_msg(b'{"user": "student"}'), RegisterMessage)
-    assert isinstance(CDProto.recv_msg(b'{"channel": "#cd"}'), JoinMessage)
+
+class mock_socket:
+    def __init__(self, content):
+        self.g = self.gen_stream(content)
+
+    def gen_stream(self, content):
+        yield len(content).to_bytes(2, "big")
+        yield content
+
+    def recv(self, n):
+        return next(self.g)
+
+
+def test_recv():
+
     assert isinstance(
-        CDProto.recv_msg(b'{"message": "Hello World", "ts": 1615852800}'), TextMessage
+        CDProto.recv_msg(mock_socket(b'{"user": "student"}')), RegisterMessage
+    )
+
+    assert isinstance(CDProto.recv_msg(mock_socket(b'{"channel": "#cd"}')), JoinMessage)
+    assert isinstance(
+        CDProto.recv_msg(mock_socket(b'{"message": "Hello World", "ts": 1615852800}')),
+        TextMessage,
     )
 
     with pytest.raises(CDProtoBadFormat):
-        CDProto.recv_msg(b"Hello World")
+        CDProto.recv_msg(mock_socket(b"Hello World"))

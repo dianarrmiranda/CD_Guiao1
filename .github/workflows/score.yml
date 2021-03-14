@@ -80,3 +80,25 @@ jobs:
         timeout-minutes: 1
         run: |
           tests/test_extra.sh
+  
+    time_tests:
+      name: Timming Tests
+      runs-on: ubuntu-latest
+
+      steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+     
+      - name: Launch server into background
+        run: |
+          python3 server.py & > /dev/null ; PID=$!; sleep 1; ps -p $PID > /dev/null
+
+      - name: Run test_fast.sh
+        timeout-minutes: 1
+        run: |
+          tests/test_fash.sh
