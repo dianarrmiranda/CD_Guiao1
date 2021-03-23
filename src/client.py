@@ -1,5 +1,6 @@
 """CD Chat client program"""
 import logging
+import sys
 
 from .protocol import CDProto, CDProtoBadFormat
 
