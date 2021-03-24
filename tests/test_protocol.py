@@ -1,6 +1,5 @@
 """Tests for the chat protocol."""
 import pytest
-import mock
 from src.protocol import (
     CDProto,
     TextMessage,
@@ -9,7 +8,6 @@ from src.protocol import (
     CDProtoBadFormat,
 )
 
-from datetime import datetime
 from freezegun import freeze_time
 
 
