@@ -49,7 +49,7 @@ def test_storm(foo, bar):
     foo.sendline("You are awesome!")
     foo.expect("You are awesome!", timeout=TIMEOUT)
 
-    bar.expect(" You are awesome!", timeout=TIMEOUT)
+    bar.expect("You are awesome!", timeout=TIMEOUT)
 
 
 def test_basic(foo, bar):
