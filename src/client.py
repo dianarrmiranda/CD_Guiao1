@@ -14,10 +14,6 @@ class Client:
         """Initializes chat client."""
         pass
 
-    def send_single_message(self, msg: str = "Hello, world") -> str:
-        """Sends a single message without any protocol."""
-        pass
-
     def connect(self):
         """Connect to chat server and setup stdin flags."""
         pass
