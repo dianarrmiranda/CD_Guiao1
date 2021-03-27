@@ -40,12 +40,12 @@ class mock_socket:
 def test_recv():
 
     assert isinstance(
-        CDProto.recv_msg(mock_socket(b'{"user": "student"}')), RegisterMessage
+        CDProto.recv_msg(mock_socket(b'{"command": "register", "user": "student"}')), RegisterMessage
     )
 
-    assert isinstance(CDProto.recv_msg(mock_socket(b'{"channel": "#cd"}')), JoinMessage)
+    assert isinstance(CDProto.recv_msg(mock_socket(b'{"command": "join", "channel": "#cd"}')), JoinMessage)
     assert isinstance(
-        CDProto.recv_msg(mock_socket(b'{"message": "Hello World", "ts": 1615852800}')),
+        CDProto.recv_msg(mock_socket(b'{"command": "message", "message": "Hello World", "ts": 1615852800}')),
         TextMessage,
     )
 
