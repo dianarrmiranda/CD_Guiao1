@@ -65,3 +65,12 @@ def test_basic(foo, bar):
 
     foo.expect("Cya around")
     bar.expect("Cya around")
+
+
+def test_extra(foo, bar):
+    foo.sendline("Hello!")
+    bar.expect("Hello!", timeout=TIMEOUT)
+    foo.sendline("/join #cd")
+    foo.sendline("no one is here...")
+    with pytest.raises(pexpect.exceptions.TIMEOUT):
+        bar.expect("no one is here", timeout=TIMEOUT)
