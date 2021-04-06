@@ -1,7 +1,6 @@
 """Tests two clients."""
 import pytest
 import pexpect
-import time
 
 TIMEOUT = 2
 
@@ -9,7 +8,6 @@ TIMEOUT = 2
 @pytest.fixture
 def foo():
     foo = pexpect.spawnu('python3 foo.py')
-    time.sleep(1)
     assert foo.isalive()
     yield foo
 
@@ -21,7 +19,6 @@ def foo():
 @pytest.fixture
 def bar():
     bar = pexpect.spawnu('python3 bar.py')
-    time.sleep(1)
     assert bar.isalive()
     yield bar
 
@@ -77,3 +74,15 @@ def test_extra(foo, bar):
     foo.sendline("no one is here...")
     with pytest.raises(pexpect.exceptions.TIMEOUT):
         bar.expect("no one is here", timeout=TIMEOUT)
+
+def test_channels(foo, bar):
+    foo.sendline("/join #c1")
+    bar.sendline("/join #c2")
+    foo.sendline("Hello darkness, my old friend")
+    foo.sendline("/join #c2")
+    foo.sendline("I've come to talk with you again")
+    bar.expect("I've come to talk with you again")
+    foo.sendline("/join #c1")
+    foo.sendline("Because a vision softly creeping")
+    with pytest.raises(pexpect.exceptions.TIMEOUT):
+        bar.expect("Because a vision softly creeping", timeout=TIMEOUT)
