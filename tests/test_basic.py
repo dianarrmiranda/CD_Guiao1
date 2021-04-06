@@ -8,27 +8,27 @@ TIMEOUT = 2
 
 @pytest.fixture
 def foo():
-    foo = pexpect.spawnu('python3 foo.py')
+    foo = pexpect.spawnu("python3 foo.py")
     time.sleep(1)
 
     assert foo.isalive()
     yield foo
 
     if foo.isalive():
-        foo.sendline('exit')
+        foo.sendline("exit")
         foo.close()
 
 
 @pytest.fixture
 def bar():
-    bar = pexpect.spawnu('python3 bar.py')
+    bar = pexpect.spawnu("python3 bar.py")
     time.sleep(1)
-    
+
     assert bar.isalive()
     yield bar
 
     if bar.isalive():
-        bar.sendline('exit')
+        bar.sendline("exit")
         bar.close()
 
 
@@ -79,6 +79,7 @@ def test_extra(foo, bar):
     foo.sendline("no one is here...")
     with pytest.raises(pexpect.exceptions.TIMEOUT):
         bar.expect("no one is here", timeout=TIMEOUT)
+
 
 def test_channels(foo, bar):
     foo.sendline("/join #c1")
