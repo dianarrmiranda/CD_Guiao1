@@ -11,5 +11,3 @@ $ pip install -r requirements.txt
 - Run tests:
 ```bash
 $ pytest
-$ tests/test_basic.sh
-$ tests/test_extra.sh
