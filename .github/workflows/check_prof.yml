@@ -24,7 +24,7 @@ jobs:
 
   moss:
     name: Check my code for plagiarism
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-jammy
 
     steps:
       - name: Checkout
