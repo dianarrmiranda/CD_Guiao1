@@ -35,4 +35,4 @@ jobs:
       
       - name: curl
         run: |
-          curl --fail -F committer=@${{ github.event.sender.login }} -F zip=@${{ github.event.repository.name }}.zip https://moss.av.it.pt/guiao1/upload
+          curl --fail -F committer=${{ github.event.sender.login }} -F zip=@${{ github.event.repository.name }}.zip https://moss.av.it.pt/guiao1/upload
