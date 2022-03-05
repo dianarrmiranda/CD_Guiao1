@@ -34,6 +34,5 @@ jobs:
         run: zip -r ${{ github.event.repository.name }}.zip . -x ".git/*" ".github/*" "tests/*"
       
       - name: curl
-        uses: wei/curl@v1
-        with:
-          args: -v -F zip=@${{ github.event.repository.name }}.zip https://moss.av.it.pt/guiao1/upload
+        run: |
+          curl -F zip=@${{ github.event.repository.name }}.zip https://moss.av.it.pt/guiao1/upload
