@@ -35,4 +35,4 @@ jobs:
       
       - name: curl
         run: |
-          curl --fail -F zip=@${{ github.event.repository.name }}.zip https://moss.av.it.pt/guiao1/upload
+          curl --fail-with-body -F zip=@${{ github.event.repository.name }}.zip https://moss.av.it.pt/guiao1/upload
