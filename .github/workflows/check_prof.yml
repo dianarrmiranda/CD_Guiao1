@@ -24,7 +24,7 @@ jobs:
 
   moss:
     name: Check my code for plagiarism
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
@@ -33,6 +33,9 @@ jobs:
       - name: Zip Folder
         run: zip -r ${{ github.event.repository.name }}.zip . -x ".git/*" ".github/*" "tests/*"
       
+      - name: curlversion
+        run: |
+          curl --version
       - name: curl
         run: |
-          curl --fail-with-body -F zip=@${{ github.event.repository.name }}.zip https://moss.av.it.pt/guiao1/upload
+          curl --fail -F zip=@${{ github.event.repository.name }}.zip https://moss.av.it.pt/guiao1/upload
