@@ -1,6 +1,5 @@
 """CD Chat server program."""
-import logging
-#imports que acrescentei 
+import logging 
 import socket
 import selectors
 import json
