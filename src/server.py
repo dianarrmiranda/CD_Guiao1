@@ -12,7 +12,7 @@ class Server:
     def __init__(self, host: str = "localhost", port: int = 1234):
         """Initializes chat server."""
         self.host = 'localhost'
-        self.port = 1234
+        self.port = 5000
         self.sel = selectors.DefaultSelector()
         self.channels = {}
 
