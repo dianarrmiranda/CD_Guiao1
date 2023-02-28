@@ -1,49 +1,37 @@
 """CD Chat server program."""
-import logging 
-import socket
-import selectors
 import json
+import logging
+import select
+import selectors
+import socket
 
 logging.basicConfig(filename="server.log", level=logging.DEBUG)
+
 
 class Server:
     """Chat Server process."""
 
-    def __init__(self, host: str = "localhost", port: int = 1234):
+    def __init__(self, host: str = "localhost", port: int = 5000):
         """Initializes chat server."""
-        self.host = 'localhost'
-        self.port = 5000
-        self.sel = selectors.DefaultSelector()
+        self.host = host
+        self.port = port
         self.channels = {}
-
-    
-    def loop(self):
-        """Loop indefinetely."""
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.bind((self.host, self.port))
-        self.sock.listen()
-        logging.debug(f"Listening on {self.host}:{self.port}")
-        self.sel.register(self.sock, selectors.EVENT_READ, data=None)
-
-        while True:
-            events = self.sel.select()
-            for key, mask in events:
-                if key.data is None:
-                    self.accept(key.fileobj, mask)
-                else:
-                    self.read(key.fileobj, mask)
+        self.sel = selectors.DefaultSelector()
+        self.sock = socket.socket()
+        self.sock.bind((host, port))
+        self.sock.listen(100)
 
     def accept(self, sock, mask):
-        conn, addr = sock.accept()
+        conn, addr = sock.accept()  # Should be ready
         logging.debug(f"Accepted connection from {addr}")
         conn.setblocking(False)
-        self.sel.register(conn, selectors.EVENT_READ, data={})
+        self.sel.register(conn, selectors.EVENT_READ, self.read)
 
     def read(self, conn, mask):
-        data = conn.recv(1024)
+        data = conn.recv(1024)  # Should be ready
         if data:
-            message = json.loads(data.decode())
             logging.debug(f"Received message: {message}")
+            message = json.loads(data.decode())
 
             if message.get("command") == "/join":
                 channel_name = message.get("channel")
@@ -51,7 +39,7 @@ class Server:
                     self.channels[channel_name] = []
                 self.channels[channel_name].append(conn)
                 logging.debug(f"Added connection to channel {channel_name}")
-            elif message.get("command") == "/exit":
+            elif message.get("command") == "exit":
                 self.sel.unregister(conn)
                 conn.close()
                 logging.debug(f"Closed connection")
@@ -66,8 +54,11 @@ class Server:
             conn.close()
             logging.debug(f"Closed connection")
 
-
-
-
-
-
+    def loop(self):
+        """Loop indefinetely."""
+        self.sel.register(self.sock, selectors.EVENT_READ, self.accept)
+        while True:
+            events = self.sel.select()
+            for key, mask in events:
+                callback = key.data
+                callback(key.fileobj, mask)

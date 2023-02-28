@@ -1,11 +1,10 @@
 """CD Chat client program"""
 import logging
-import sys
-import socket
 import selectors
+import socket
+import sys
 
 from .protocol import CDProto, CDProtoBadFormat
-
 
 logging.basicConfig(filename=f"{sys.argv[0]}.log", level=logging.DEBUG)
 
@@ -18,46 +17,38 @@ class Client:
         self.name = name
         self.socket = None
         self.sel = selectors.DefaultSelector()
+        self.connected = False
         pass
 
     def connect(self):
         """Connect to chat server and setup stdin flags."""
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect(("localhost", 1234))
+        self.socket.connect(("localhost", 5000))
         self.socket.setblocking(False)
-
+        self.connected = True;
         self.sel.register(self.socket, selectors.EVENT_READ, data=None)
         pass
 
+
     def loop(self):
         """Loop indefinetely."""
-        while True:
-            events = self.sel.select()
-            for key, mask in events:
-                if key.data is None:
-                    message = input("> ")
-                    if message == "/exit":
-                        self.socket.close()
-                        sys.exit()
-                    elif message.strartswith("/join"):
-                        channel = message.split()[1]
-                        msg = CDProto.join(self.name, channel)
-                        self.socket.sendall(msg.encode())
-                    else:
-                        msg = CDProto.send(self.name, message)
-                        self.socket.sendall(msg.encode())
+        while self.connected:
+            # Check for input from the user
+            try:
+                message = input()
+                if message.startswith("/join "):
+                    channel = message[6:]
+                    self.protocol.change_channel(channel)
+                elif message == "exit":
+                    self.protocol.disconnect()
+                    self.connected = False
                 else:
-                    data = key.fileobj.recv(1024)
-                    if not data:
-                        self.sel.unregister(key.fileobj)
-                        self.socket.close()
-                        sys.exit()
-                    else:
-                        try:
-                            msg = CDProto.decode(data)
-                            logging.debug(f"Received message: {msg}")
-                            print(f"{msg['from']}: {msg['message']}")
-                        except CDProtoBadFormat as e:
-                            logging.error(str(e))
-                            print(f"Error: {e}")
-        pass
+                    self.protocol.send_message(message)
+            except EOFError:
+                # End of input stream, terminate the client
+                self.protocol.disconnect()
+                self.connected = False
+            except CDProtoBadFormat as e:
+                logging.error(e)
+            except Exception as e:
+                logging.exception(e)

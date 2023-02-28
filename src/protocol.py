@@ -1,39 +1,62 @@
-"""Protocol for chat server - Computação Distribuida Assignment 1."""
 import json
 from socket import socket
+from datetime import datetime
+
 
 class Message:
     """Message Type."""
+    
+    def __init__(self, command):
+        self.command = command
+    
+    def to_json(self):
+        raise NotImplementedError
+
 
 class JoinMessage(Message):
     """Message to join a chat channel."""
+    
     def __init__(self, channel):
+        super().__init__("join")
         self.channel = channel
+    
+    def to_json(self):
+        return json.dumps({"command": self.command, "channel": self.channel}) #converte python para JSON
+    
+    def __str__(self):  
+        return self.to_json()
 
-    def __str__(self):
-        return f"JOIN {self.channel}"
-        
 
 class RegisterMessage(Message):
     """Message to register username in the server."""
-    def __init__(self, username):
-        self.username = username
-
-    def __str__(self):
-        return f"REGISTER {self.username}"
-
+    def __init__(self, user):
+        super().__init__("register")
+        self.user = user
     
+    def to_json(self):
+        return json.dumps({"command": self.command, "user": self.user })
+    
+    def __str__(self):
+        return self.to_json()
+
+
 class TextMessage(Message):
     """Message to chat with other clients."""
-    def __init__(self, message, channel=None):
+    
+    def __init__(self, message, channel: str = None, ts=None):
+        super().__init__("message")
         self.message = message
         self.channel = channel
-
-    def __str__(self):
+        self.ts = ts or int(datetime.now().timestamp())
+    
+    def to_json(self):
         if self.channel:
-            return f"MESSAGE {self.channel} {self.message}"
+            return json.dumps({"command": self.command, "message": self.message,"channel": self.channel, "ts": self.ts })
         else:
-            return f"MESSAGE {self.message}"
+            return json.dumps({"command": self.command, "message": self.message, "ts": self.ts })
+    
+    def __str__(self):
+        return self.to_json()
 
 
 class CDProto:
@@ -50,39 +73,47 @@ class CDProto:
         return JoinMessage(channel)
 
     @classmethod
-    def message(cls, message: str, channel: str = None) -> TextMessage:
+    def message(cls, message: str, channel: str = None, ts=None) -> TextMessage:
         """Creates a TextMessage object."""
-        return TextMessage(message, channel)
+        return TextMessage(message, channel, ts)
 
     @classmethod
     def send_msg(cls, connection: socket, msg: Message):
         """Sends through a connection a Message object."""
-        msg_str = str(msg)
-        data = bytes(msg_str, "utf-8")
-        connection.sendall(data)
+        msg_json = msg.to_json().encode("utf-8")
+        msg_len = len(msg_json)
+        header = msg_len.to_bytes(2, "big") #define o tamanho da mensagem
+        connection.sendall(header + msg_json) #sendall garante que a mensagem é enviada completamente
 
     @classmethod
     def recv_msg(cls, connection: socket) -> Message:
         """Receives through a connection a Message object."""
-        data = connection.recv(2)
-        length = int.from_bytes(data, "big")
-        data = connection.recv(length)
-        msg_str = data.decode("utf-8")
-        msg = json.loads(msg_str)
-        if msg["command"] == "register":
-            return RegisterMessage(msg["user"])
-        elif msg["command"] == "join":
-            return JoinMessage(msg["channel"])
-        elif msg["command"] == "message":
-            return TextMessage(msg["message"], msg["ts"])
-        else:
-            raise CDProtoBadFormat(msg_str)
-    
+        # Lê os 2 bytes do cabeçalho
+        header = connection.recv(2)
+        if not header:
+            raise ConnectionError("Connection closed by peer")
+        msg_len = int.from_bytes(header, "big") #converte os bytes para inteiro
+        msg_json = connection.recv(msg_len).decode("utf-8") # converrte a mensagem de JSON para string
 
+        #verfica se consegue descodificar a mensagem
+        try:
+            msg_data = json.loads(msg_json)
+        except json.JSONDecodeError:
+            raise CDProtoBadFormat(msg_json)
+        
+        if msg_data["command"] == "register":
+            return RegisterMessage(msg_data["user"])
+        elif msg_data["command"] == "join":
+            return JoinMessage(msg_data["channel"])
+        elif msg_data["command"] == "message":
+            return TextMessage(msg_data["message"], msg_data.get("channel"), msg_data.get("ts"))
+        else:
+            raise CDProtoBadFormat(msg_json)
+        
 class CDProtoBadFormat(Exception):
     """Exception when source message is not CDProto."""
 
-    def __init__(self, original_msg: bytes=None) :
+    def __init__(self, original_msg: bytes = None):
         """Store original message that triggered exception."""
         self._original = original_msg
 
