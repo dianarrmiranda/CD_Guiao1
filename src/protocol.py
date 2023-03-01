@@ -2,16 +2,11 @@ import json
 from socket import socket
 from datetime import datetime
 
-
 class Message:
     """Message Type."""
     
     def __init__(self, command):
         self.command = command
-    
-    def to_json(self):
-        raise NotImplementedError
-
 
 class JoinMessage(Message):
     """Message to join a chat channel."""
@@ -90,9 +85,10 @@ class CDProto:
         """Receives through a connection a Message object."""
         # Lê os 2 bytes do cabeçalho
         header = connection.recv(2)
-        if not header:
-            raise ConnectionError("Connection closed by peer")
         msg_len = int.from_bytes(header, "big") #converte os bytes para inteiro
+        if not msg_len:
+            return None
+        
         msg_json = connection.recv(msg_len).decode("utf-8") # converrte a mensagem de JSON para string
 
         #verfica se consegue descodificar a mensagem
