@@ -68,18 +68,28 @@ class CDProto:
         return JoinMessage(channel)
 
     @classmethod
-    def message(cls, message: str, channel: str = None, ts=None) -> TextMessage:
+    def message(cls, message: str, channel: str = None) -> TextMessage:
         """Creates a TextMessage object."""
-        return TextMessage(message, channel, ts)
+        return TextMessage(message, channel)
 
     @classmethod
     def send_msg(cls, connection: socket, msg: Message):
         """Sends through a connection a Message object."""
-        msg_json = msg.to_json().encode("utf-8")
+        if isinstance(msg, JoinMessage):
+            msg_json = JoinMessage.__str__(msg)
+        elif isinstance(msg, TextMessage):
+            msg_json = TextMessage.__str__(msg)
+        elif isinstance(msg, RegisterMessage):
+            msg_json = RegisterMessage.__str__(msg)
+        
+        msg_json = msg_json.encode("utf-8")
         msg_len = len(msg_json)
-        header = msg_len.to_bytes(2, "big") #define o tamanho da mensagem
-        connection.sendall(header + msg_json) #sendall garante que a mensagem é enviada completamente
-
+        header = msg_len.to_bytes(2, 'big') #define o tamanho da mensagem
+        try:
+            connection.sendall(header + msg_json) #sendall garante que a mensagem é enviada completamente
+        except BrokenPipeError:
+            raise CDProtoBadFormat(msg_json)
+        
     @classmethod
     def recv_msg(cls, connection: socket) -> Message:
         """Receives through a connection a Message object."""

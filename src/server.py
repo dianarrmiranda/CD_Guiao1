@@ -15,57 +15,59 @@ class Server:
         """Initializes chat server."""
         self.host = "localhost"
         self.port = 5000
-        self.channels = {}
-        self.sel = selectors.DefaultSelector()
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #para não bloquear o socket
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind((self.host, self.port))
         self.sock.listen(100)
-        self.userActual = ""
-        self.channelActual = ""
 
-    def accept(self, sock, mask):
-        (conn, addr) = sock.accept()  # Should be ready
-        logging.debug('Accepted connection from %s ', addr)
-        conn.setblocking(False)
-        self.sel.register(conn, selectors.EVENT_READ, self.read)
+        self.sel = selectors.DefaultSelector()
+        self.sel.register(self.sock, selectors.EVENT_READ, self.accept)
         
-
-    def read(self, conn, mask):
-        message  = CDProto.recv_msg(conn) #recebe a mensagem
-        logging.debug('Accepted message %s ',message)
-        print("m: " + str(message))
-        if message:
-            print("comand: " + message.command)
-            if message.command == "register":
-                print("Add User " + message.user)
-                self.userActual = message.user
-                self.channels[message.user] = []
-            elif message.command == "join":
-                print("Join User " + self.userActual)
-                self.channelActual = message.channel
-                self.channels[self.userActual].append(message.channel)
-            elif message.command == "message":
-                for user in self.channels.keys():
-                    if self.channelActual in self.channels[user]:
-                        print("Message " + str(message.message))
-                        CDProto.send_msg(conn, message)
-                    else:
-                        logging.debug('User %s not in channel', user)
-                        print("User " + user + " not in channel")       
-            else:
-                logging.error('Unknown command %s ',message.command)
-            return
-        else:
-            self.sel.unregister(conn)
-            conn.close()
-            logging.debug('Closed connection')
-
+        self.channels = {"all": []}
 
     def loop(self):
         """Loop indefinetely."""
-        self.sel.register(self.sock, selectors.EVENT_READ, self.accept)
         while True:
             events = self.sel.select()
             for key, mask in events:
                 callback = key.data
-                callback(key.fileobj, mask)
+                callback(key.fileobj)
+
+    def accept(self, sock):
+        conn, addr = sock.accept() 
+        logging.debug('Accepted connection from %s ', addr)
+        self.sel.register(conn, selectors.EVENT_READ, self.read)
+
+    def read(self, conn):
+        message = CDProto.recv_msg(conn)  # recebe a mensagem
+        logging.debug('Accepted message %s ', message)
+        #print("m: " + str(message))
+
+        if message:
+            if message.command == "register":
+                #print("Add User " + message.user)
+                self.channels["all"].append(conn)
+            elif message.command == "join":
+                #print("Join to channel " + message.channel)
+                if message.channel not in self.channels:
+                    self.channels[message.channel] = []
+                self.channels[message.channel].append(conn)
+            elif message.command == "message":
+                #print("Send message to " + str(message.channel))
+                if message.channel is None: message.channel = "all"
+                for c in self.channels[message.channel]:
+                    if c != conn:
+                        CDProto.send_msg(c, message)
+            else:
+                logging.error('Unknown command %s ', message.command)
+            return
+        else:
+            logging.debug('Closing connection to %s ', conn)
+            for channel in self.channels:
+                if conn in self.channels[channel]:
+                    self.channels[channel].remove(conn)
+                
+            self.sel.unregister(conn)
+            conn.close()
+
