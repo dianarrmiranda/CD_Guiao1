@@ -32,8 +32,8 @@ jobs:
 
       - name: Zip Folder
         run: zip -r ${{ github.event.repository.name }}.zip . -x ".git/*" ".github/*" "tests/*"
-      
+
       - name: curl
-        uses: wei/curl@v1
-        with:
-          args: -v -F zip=@${{ github.event.repository.name }}.zip https://moss.av.it.pt/guiao2/upload
+        run: |
+          curl --fail -F committer=${{ github.event.sender.login }} -F zip=@${{ github.event.repository.name }}.zip https://moss.av.it.pt/guiao1/upload
+ 
