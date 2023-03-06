@@ -11,6 +11,7 @@ $ pip install -r requirements.txt
 - Run tests:
 ```bash
 $ pytest
+```
 
 ### Creating a virtual environment
 
