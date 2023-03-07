@@ -12,7 +12,11 @@ jobs:
 
       - name: Check file existence
         id: check_files
+<<<<<<< HEAD
         uses: andstor/file-existence-action@v1
+=======
+        uses: andstor/file-existence-action@v2
+>>>>>>> upstream/main
         with:
           files: "NMEC.txt"
           allow_failure: true
@@ -32,7 +36,15 @@ jobs:
 
       - name: Zip Folder
         run: zip -r ${{ github.event.repository.name }}.zip . -x ".git/*" ".github/*" "tests/*"
+<<<<<<< HEAD
       
       - name: curl
         run: |
           curl --fail -F committer=${{ github.event.sender.login }} -F zip=@${{ github.event.repository.name }}.zip https://moss.av.it.pt/guiao1/upload
+=======
+
+      - name: curl
+        run: |
+          curl --fail -F committer=${{ github.event.sender.login }} -F zip=@${{ github.event.repository.name }}.zip https://moss.av.it.pt/guiao1/upload
+ 
+>>>>>>> upstream/main
